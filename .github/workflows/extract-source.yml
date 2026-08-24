@@ -1,0 +1,109 @@
+name: Finalize E-School source tree
+
+on:
+  push:
+    paths:
+      - '.github/workflows/extract-source.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  extract-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract integrated v3 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f eschool-integrated-v3.zip
+          rm -rf .eschool-extract
+          mkdir .eschool-extract
+          unzip -q eschool-integrated-v3.zip -d .eschool-extract
+
+          # Never copy local environment credentials into source control.
+          rm -f .eschool-extract/.env.local
+
+          # Copy the project source into the repository root.
+          rsync -a --exclude='.env.local' .eschool-extract/ ./
+
+          # The source tree replaces the temporary archive package.
+          rm -f eschool-integrated-v3.zip
+          rm -rf .eschool-extract
+
+      - name: Add repository safety files
+        shell: bash
+        run: |
+          cat > .gitignore <<'EOF'
+          node_modules/
+          .next/
+          out/
+          build/
+          dist/
+          .env
+          .env.local
+          .env.*.local
+          !.env.example
+          *.log
+          npm-debug.log*
+          yarn-debug.log*
+          yarn-error.log*
+          pnpm-debug.log*
+          .DS_Store
+          Thumbs.db
+          .vscode/
+          .idea/
+          .vercel/
+          *.tsbuildinfo
+          EOF
+
+      - name: Update source README
+        shell: bash
+        run: |
+          cat > README.md <<'EOF'
+          # E-School Management System
+
+          E-School is a multi-tenant education management SaaS platform built with Next.js, TypeScript, and Supabase. It connects platform administrators, schools, teachers, parents/guardians, and students through secure role-based portals.
+
+          ## Current build
+
+          The repository contains the integrated v3 application source, including Supabase authentication and session handling, backend-controlled role routing, tenant-aware access, a premium responsive School Admin interface, student and teacher records, classes, subjects, assessments, attendance, results, report cards, and the foundations for all five user portals.
+
+          ## Tech stack
+
+          - Next.js
+          - React
+          - TypeScript
+          - Supabase Auth
+          - Supabase PostgreSQL
+          - Supabase Row Level Security
+
+          ## Environment variables
+
+          Copy `.env.example` to `.env.local` for local development and configure the required values. Never commit `.env.local` or the Supabase service-role key.
+
+          ```bash
+          npm install
+          npm run dev
+          ```
+
+          Users do not choose their own role. Authentication, school assignment, role routing, and database access are enforced through the backend and Supabase RLS.
+          EOF
+
+      - name: Commit finalized source tree
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No source changes to commit."
+            exit 0
+          fi
+          git commit -m "Finalize integrated E-School source tree"
+          git push origin HEAD:main
