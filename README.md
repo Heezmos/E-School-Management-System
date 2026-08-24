@@ -2,6 +2,14 @@
 
 Multi-tenant education management SaaS platform built with Next.js, TypeScript, and Supabase.
 
-This repository contains the integrated E-School v3 application foundation, including backend-controlled authentication and role routing, premium responsive School Admin UI, live students, teachers, classes, subjects, assessments, attendance and results integrations.
+## Current package
 
-> Security note: production secrets are not committed to this repository. Configure environment variables in your deployment environment.
+The repository currently includes the complete integrated v3 project archive. This build joins the premium responsive E-School interface with the Supabase backend foundation, including authentication, backend-controlled role routing, tenant-aware School Admin data, students, teachers, classes, subjects, assessments, attendance, results, and report cards.
+
+## Security
+
+Production secrets are intentionally not committed. Configure `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in your deployment environment. Never expose the service-role key in browser code.
+
+## Source package
+
+Download or extract `eschool-integrated-v3.zip` from this repository to work with the full project source.
