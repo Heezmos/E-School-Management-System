@@ -1,0 +1,14 @@
+import { redirect } from "next/navigation";
+import PremiumShell from "@/components/PremiumShell";
+import { getPrimaryRole } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+
+const nav = [
+  { label:"Dashboard", href:"/school-admin", icon:"⌂", group:"OVERVIEW" }, { label:"School Setup", href:"/school-admin/setup", icon:"⚙", group:"OVERVIEW" }, { label:"User Management", href:"/school-admin/users", icon:"♙", group:"PEOPLE" }, { label:"Teachers", href:"/school-admin/teachers", icon:"♟", group:"PEOPLE" }, { label:"Students", href:"/school-admin/students", icon:"♚", group:"PEOPLE" }, { label:"Parents & Guardians", href:"/school-admin/parents", icon:"♧", group:"PEOPLE" }, { label:"Classes", href:"/school-admin/classes", icon:"▦", group:"ACADEMICS" }, { label:"Subjects", href:"/school-admin/subjects", icon:"▤", group:"ACADEMICS" }, { label:"Assessments", href:"/school-admin/assessments", icon:"✓", group:"ACADEMICS" }, { label:"Attendance", href:"/school-admin/attendance", icon:"◷", group:"ACADEMICS" }, { label:"Results & Reports", href:"/school-admin/results", icon:"▥", group:"ACADEMICS" }, { label:"Analytics", href:"/school-admin/analytics", icon:"⌁", group:"ACADEMICS" }
+];
+export default async function ClassesPage() {
+  const ctx=await getPrimaryRole(); if(ctx.role!=="school_admin") redirect("/");
+  const supabase=await createClient();
+  const {data}=await supabase.from("classes").select("id,name,code,capacity,status,academic_years(name),class_levels(name)").eq("school_id",ctx.schoolId).order("name");
+  return <PremiumShell schoolName={ctx.schoolName||"School Workspace"} userLabel="Administrator" roleLabel="School Admin" nav={nav}><section className="hero"><div><h1>Classes</h1><p>Academic class structure connected to the backend.</p></div></section><section className="premium-panel"><div className="tablewrap"><table className="premium-table"><thead><tr><th>CLASS</th><th>LEVEL</th><th>YEAR</th><th>CAPACITY</th><th>STATUS</th></tr></thead><tbody>{data?.length?data.map((c:any)=><tr key={c.id}><td><b>{c.name}</b></td><td>{c.class_levels?.name||"—"}</td><td>{c.academic_years?.name||"—"}</td><td>{c.capacity||"—"}</td><td><span className="pill greenpill">{c.status}</span></td></tr>):<tr><td colSpan={5}>No classes configured.</td></tr>}</tbody></table></div></section></PremiumShell>;
+}
