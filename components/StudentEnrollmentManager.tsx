@@ -1,0 +1,18 @@
+"use client";
+import { FormEvent,useState } from "react";
+import { useRouter } from "next/navigation";
+type Option={id:string;label:string;extra?:string}; type Enrollment={id:string;student:string;student_number:string;year:string;class_name:string;status:string;promotion_status:string|null};
+export default function StudentEnrollmentManager({students,years,classes,enrollments}:{students:Option[];years:Option[];classes:(Option&{extra?:string})[];enrollments:Enrollment[]}){
+ const router=useRouter(); const [busy,setBusy]=useState(false); const [msg,setMsg]=useState("");
+ async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setMsg("");const body=Object.fromEntries(new FormData(e.currentTarget).entries());const r=await fetch("/api/school-admin/student-enrollments",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();setBusy(false);if(!r.ok){setMsg(d.error||"Unable to enroll student.");return;}setMsg("Student enrolled successfully.");(e.currentTarget as HTMLFormElement).reset();router.refresh();}
+ async function status(id:string,enrollment_status:string,promotion_status?:string){const r=await fetch("/api/school-admin/student-enrollments",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,enrollment_status,promotion_status:promotion_status||null})});const d=await r.json();if(!r.ok){setMsg(d.error||"Unable to update enrollment.");return;}router.refresh();}
+ return <>
+  <section className="premium-panel"><div className="panelhead"><div><h2>Enroll Student</h2><p className="note">Place a student into a class for a specific academic year.</p></div></div><form className="form-grid" onSubmit={submit}>
+   <div className="field"><label>Student</label><select name="student_id" required><option value="">Select student</option>{students.map(x=><option key={x.id} value={x.id}>{x.label} · {x.extra}</option>)}</select></div>
+   <div className="field"><label>Academic Year</label><select name="academic_year_id" required><option value="">Select year</option>{years.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select></div>
+   <div className="field"><label>Class</label><select name="class_id" required><option value="">Select class</option>{classes.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select></div>
+   <div style={{gridColumn:"1/-1"}}><button className="premium-button" disabled={busy}>{busy?"Enrolling...":"Enroll Student"}</button></div>
+  </form>{msg&&<div className="system-message" style={{marginTop:14}}>{msg}</div>}</section>
+  <section className="premium-panel" style={{marginTop:18}}><div className="panelhead"><div><h2>Enrollment Register</h2><p className="note">Current and historical class placements.</p></div><span className="count-badge">{enrollments.length}</span></div><div className="tablewrap"><table className="premium-table"><thead><tr><th>STUDENT</th><th>CLASS</th><th>ACADEMIC YEAR</th><th>STATUS</th><th>PROMOTION</th><th>ACTIONS</th></tr></thead><tbody>{enrollments.length?enrollments.map(e=><tr key={e.id}><td><b>{e.student}</b><br/><small>{e.student_number}</small></td><td>{e.class_name}</td><td>{e.year}</td><td><span className={`pill ${e.status==="active"?"greenpill":"amberpill"}`}>{e.status}</span></td><td>{e.promotion_status||"—"}</td><td><div className="admin-actions">{e.status==="active"&&<><button className="mini-btn" onClick={()=>status(e.id,"completed","promoted")}>Promote/Complete</button><button className="mini-btn danger-btn" onClick={()=>status(e.id,"withdrawn")}>Withdraw</button></>}</div></td></tr>):<tr><td colSpan={6}>No enrollments yet.</td></tr>}</tbody></table></div></section>
+ </>;
+}
