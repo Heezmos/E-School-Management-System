@@ -18,6 +18,10 @@ export async function requireUser() {
 export async function getPrimaryRole() {
   const { supabase, user } = await requireUser();
 
+  if (user.user_metadata?.must_change_password === true) {
+    redirect("/change-password");
+  }
+
   const { data: roles } = await supabase
     .from("user_school_roles")
     .select("role, school_id, schools(name)")
