@@ -8,10 +8,7 @@ const SUPER_ADMIN_ASSIGNABLE = new Set(["school_admin", "teacher", "parent", "st
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: callerRole } = await supabase
     .from("user_school_roles")
@@ -30,60 +27,46 @@ export async function POST(request: Request) {
   const firstName = String(body.first_name || "").trim();
   const lastName = String(body.last_name || "").trim();
   const role = String(body.role || "");
-  const schoolId =
-    callerRole.role === "school_admin"
-      ? callerRole.school_id
-      : String(body.school_id || "");
+  const temporaryPassword = String(body.password || "");
+  const schoolId = callerRole.role === "school_admin" ? callerRole.school_id : String(body.school_id || "");
 
   if (!email || !email.includes("@") || !schoolId) {
     return NextResponse.json({ error: "Valid email and school are required." }, { status: 400 });
   }
-
-  const allowed =
-    callerRole.role === "super_admin"
-      ? SUPER_ADMIN_ASSIGNABLE.has(role)
-      : SCHOOL_ADMIN_ASSIGNABLE.has(role);
-
-  if (!allowed) {
-    return NextResponse.json({ error: "You cannot assign that role." }, { status: 403 });
+  if (temporaryPassword.length < 8) {
+    return NextResponse.json({ error: "Temporary password must be at least 8 characters." }, { status: 400 });
   }
 
-  const admin = createAdminClient();
+  const allowed = callerRole.role === "super_admin" ? SUPER_ADMIN_ASSIGNABLE.has(role) : SCHOOL_ADMIN_ASSIGNABLE.has(role);
+  if (!allowed) return NextResponse.json({ error: "You cannot assign that role." }, { status: 403 });
 
+  const admin = createAdminClient();
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,
+    password: temporaryPassword,
     email_confirm: true,
     user_metadata: {
       first_name: firstName,
-      last_name: lastName
+      last_name: lastName,
+      must_change_password: true
     }
   });
 
   if (createError || !created.user) {
-    return NextResponse.json(
-      { error: createError?.message || "Unable to create user." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: createError?.message || "Unable to create user." }, { status: 400 });
   }
 
-  const { error: roleError } = await admin
-    .from("user_school_roles")
-    .insert({
-      user_id: created.user.id,
-      school_id: schoolId,
-      role,
-      is_active: true
-    });
+  const { error: roleError } = await admin.from("user_school_roles").insert({
+    user_id: created.user.id,
+    school_id: schoolId,
+    role,
+    is_active: true
+  });
 
   if (roleError) {
     await admin.auth.admin.deleteUser(created.user.id);
     return NextResponse.json({ error: roleError.message }, { status: 400 });
   }
 
-  return NextResponse.json({
-    ok: true,
-    user_id: created.user.id,
-    role,
-    school_id: schoolId
-  });
+  return NextResponse.json({ ok: true, user_id: created.user.id, role, school_id: schoolId, password_change_required: true });
 }
