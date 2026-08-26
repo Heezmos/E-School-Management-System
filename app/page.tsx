@@ -7,6 +7,7 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+  if (user.user_metadata?.must_change_password === true) redirect("/change-password");
 
   const { data: roleRow } = await supabase
     .from("user_school_roles")
