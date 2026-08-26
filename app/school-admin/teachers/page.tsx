@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import PremiumShell from "@/components/PremiumShell";
 import TeacherAssignmentManager from "@/components/TeacherAssignmentManager";
+import TeacherCreateForm from "@/components/TeacherCreateForm";
 import { getPrimaryRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,9 +24,10 @@ export default async function TeachersPage(){
  const subjectOptions=(subjects.data||[]).map((s:any)=>({id:s.id,label:s.name,extra:s.code||""}));
  const assignmentRows=(assignments.data||[]).map((a:any)=>({id:a.id,teacher:`${a.teachers?.profiles?.first_name||""} ${a.teachers?.profiles?.last_name||""}`.trim()||"Teacher",teacher_number:a.teachers?.teacher_number||"",year:a.academic_years?.name||"—",term:a.terms?.name||"Whole year",class_name:a.classes?.name||"—",subject:a.subjects?.name||"—",assignment_type:a.assignment_type,status:a.status}));
  return <PremiumShell schoolName={ctx.schoolName||"School Workspace"} userLabel="Administrator" roleLabel="School Admin" nav={nav}>
-  <section className="hero"><div><h1>Teachers & Assignments</h1><p>Manage teaching staff and precisely control the classes and subjects assigned to each teacher.</p></div></section>
+  <section className="hero"><div><h1>Teachers & Assignments</h1><p>Add teaching staff, manage their school accounts, and assign classes and subjects.</p></div></section>
   <section className="stats"><article className="stat"><div><small>Total Teachers</small><div className="value">{teachers.data?.length||0}</div></div></article><article className="stat"><div><small>Active Assignments</small><div className="value">{assignmentRows.filter((a:any)=>a.status==="active").length}</div></div></article><article className="stat"><div><small>Active Classes</small><div className="value">{classOptions.length}</div></div></article><article className="stat"><div><small>Subjects</small><div className="value">{subjectOptions.length}</div></div></article></section>
-  <section className="premium-panel" style={{marginTop:18}}><div className="panelhead"><h2>Teacher Directory</h2></div><div className="tablewrap"><table className="premium-table"><thead><tr><th>TEACHER</th><th>NUMBER</th><th>SPECIALIZATION</th><th>STATUS</th></tr></thead><tbody>{teachers.data?.length?teachers.data.map((t:any)=><tr key={t.id}><td><b>{t.profiles?.first_name} {t.profiles?.last_name}</b><br/><small>{t.profiles?.email}</small></td><td>{t.teacher_number}</td><td>{t.specialization||"—"}</td><td><span className={`pill ${t.employment_status==="active"?"greenpill":"amberpill"}`}>{t.employment_status}</span></td></tr>):<tr><td colSpan={4}>No teachers yet. Create teacher accounts from User Management.</td></tr>}</tbody></table></div></section>
+  <TeacherCreateForm />
+  <section className="premium-panel" style={{marginTop:18}}><div className="panelhead"><h2>Teacher Directory</h2></div><div className="tablewrap"><table className="premium-table"><thead><tr><th>TEACHER</th><th>NUMBER</th><th>SPECIALIZATION</th><th>STATUS</th></tr></thead><tbody>{teachers.data?.length?teachers.data.map((t:any)=><tr key={t.id}><td><b>{t.profiles?.first_name} {t.profiles?.last_name}</b><br/><small>{t.profiles?.email}</small></td><td>{t.teacher_number}</td><td>{t.specialization||"—"}</td><td><span className={`pill ${t.employment_status==="active"?"greenpill":"amberpill"}`}>{t.employment_status}</span></td></tr>):<tr><td colSpan={4}>No teachers yet. Use the Add Teacher form above to create the first teacher.</td></tr>}</tbody></table></div></section>
   <div style={{marginTop:18}}><TeacherAssignmentManager teachers={teacherOptions} years={yearOptions} terms={termOptions} classes={classOptions} subjects={subjectOptions} assignments={assignmentRows}/></div>
  </PremiumShell>;
 }
