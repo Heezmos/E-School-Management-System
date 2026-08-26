@@ -1,0 +1,10 @@
+.field select{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:11px;outline:none;background:#fff;color:var(--ink)}
+.field select:focus{border-color:var(--navy2);box-shadow:0 0 0 3px rgba(23,69,120,.10)}
+.system-message{padding:12px 14px;border-radius:12px;background:#eef6ff;border:1px solid #d9e8f8;color:#174578;font-size:13px}
+.count-badge{min-width:34px;height:34px;padding:0 10px;border-radius:999px;background:#edf3fa;color:var(--navy2);display:grid;place-items:center;font-size:12px;font-weight:800}
+.admin-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.mini-btn{border:1px solid var(--line);background:#fff;color:var(--navy2);padding:7px 9px;border-radius:9px;font-size:11px;font-weight:750}
+.mini-btn:hover{background:#f5f8fc}.danger-btn{color:var(--red);border-color:#f0d8dc}.danger-btn:hover{background:#fff5f5}
+.premium-panel .note{margin-top:5px}
+.premium-table tbody tr:hover{background:#fafcff}
+@media(max-width:780px){.admin-actions{min-width:190px}.premium-panel{padding:16px}}
