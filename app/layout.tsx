@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./operations.css";
 
 export const metadata = {
   title: "E-School Management System",
