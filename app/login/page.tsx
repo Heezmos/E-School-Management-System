@@ -65,6 +65,9 @@ export default function LoginPage() {
           <div className="note">
             Your role and school access are determined securely by E-School after sign-in.
           </div>
+          <div style={{ marginTop: 10, fontSize: 11, color: "#94a3b8" }}>
+            Build: AUTH-FIX-20260826-B
+          </div>
         </form>
       </section>
     </main>
