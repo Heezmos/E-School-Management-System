@@ -39,7 +39,7 @@ export default async function SchoolAdminPage() {
   return (
     <PremiumShell schoolName={ctx.schoolName || "School Workspace"} userLabel="Administrator" roleLabel="School Admin" nav={nav}>
       <section className="hero">
-        <div><h1>Good day, Administrator 👋</h1><p>Live data from your E-School backend.</p></div>
+        <div><h1>Good day, Administrator 👋</h1><p>Manage your school operations, people and academic activity.</p></div>
         <div className="term">{currentYear.data?.name || "Academic year not configured"}</div>
       </section>
       <section className="stats">
@@ -61,10 +61,10 @@ export default async function SchoolAdminPage() {
           <div className="action"><div className="aico">▥</div><div><strong>Report cards ready for publication</strong><small>Approved academic reports</small></div><div className="count">{reportCards.count ?? 0}</div></div>
         </article>
         <article className="premium-panel">
-          <div className="panelhead"><h2>Backend Status</h2></div>
-          <div className="action"><div className="aico">✓</div><div><strong>Supabase Auth</strong><small>Connected</small></div></div>
-          <div className="action"><div className="aico">✓</div><div><strong>Role routing</strong><small>Backend controlled</small></div></div>
-          <div className="action"><div className="aico">✓</div><div><strong>RLS tenant security</strong><small>Enabled</small></div></div>
+          <div className="panelhead"><h2>School Activity Overview</h2></div>
+          <div className="action"><div className="aico">♟</div><div><strong>Teaching staff</strong><small>{teachers.count ?? 0} active teachers</small></div></div>
+          <div className="action"><div className="aico">♚</div><div><strong>Student population</strong><small>{students.count ?? 0} active students</small></div></div>
+          <div className="action"><div className="aico">▦</div><div><strong>Class structure</strong><small>{classes.count ?? 0} active classes</small></div></div>
         </article>
       </section>
       <section className="premium-panel" style={{marginTop:18}}>
