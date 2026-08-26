@@ -1,18 +1,6 @@
 import { redirect } from "next/navigation";
 import DashboardShell from "@/components/DashboardShell";
 import { getPrimaryRole } from "@/lib/auth";
-
-const nav = ["Dashboard","My Subjects","Assessments","Results","Attendance","Feedback","Report Cards","Announcements","Profile"];
-
-export default async function StudentSectionPage({ params }: { params: Promise<{ section: string }> }) {
-  const ctx = await getPrimaryRole();
-  if (ctx.role !== "student") redirect("/");
-  const { section } = await params;
-  const title = section.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
-
-  return (
-    <DashboardShell schoolName={ctx.schoolName || "School Workspace"} roleLabel="Student" title={title} subtitle="Student academic workspace" nav={nav}>
-      <section className="panel"><h2>{title}</h2><div className="empty">This student module is connected to the sidebar and ready for published academic information.</div></section>
-    </DashboardShell>
-  );
-}
+import { createClient } from "@/lib/supabase/server";
+const nav=["Dashboard","My Subjects","Assessments","Results","Attendance","Feedback","Report Cards","Announcements","Profile"];
+export default async function StudentSectionPage({params}:{params:Promise<{section:string}>}){const ctx=await getPrimaryRole();if(ctx.role!=="student")redirect("/");const{section}=await params;const title=section.split("-").map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");const s=await createClient();const{data:student}=await s.from("students").select("id,first_name,last_name,student_number").eq("school_id",ctx.schoolId).eq("profile_id",ctx.user.id).maybeSingle();if(!student)return <DashboardShell schoolName={ctx.schoolName||"School Workspace"} roleLabel="Student" title={title} subtitle="Student academic workspace" nav={nav}><div className="empty">Student profile not found.</div></DashboardShell>;if(section==="results"||section==="report-cards"){const{data:cards}=await s.from("report_cards").select("id,overall_percentage,overall_grade,class_position,attendance_percentage,promotion_status,general_remark,status,academic_years(name),terms(name),classes(name),report_card_subjects(percentage,grade,position,teacher_remark,subjects(name,code))").eq("school_id",ctx.schoolId).eq("student_id",student.id).eq("status","published").order("published_at",{ascending:false});return <DashboardShell schoolName={ctx.schoolName||"School Workspace"} roleLabel="Student" title="Published Results" subtitle={`${student.first_name} ${student.last_name} · ${student.student_number}`} nav={nav}>{cards?.length?cards.map((c:any)=><section className="panel" key={c.id} style={{marginBottom:18}}><div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><div><h2>{c.terms?.name} · {c.academic_years?.name}</h2><p>{c.classes?.name}</p></div><div className="badge">Average {Number(c.overall_percentage||0).toFixed(1)}% · Grade {c.overall_grade||"—"}</div></div><div className="tablewrap"><table className="premium-table"><thead><tr><th>SUBJECT</th><th>PERCENTAGE</th><th>GRADE</th><th>POSITION</th><th>TEACHER REMARK</th></tr></thead><tbody>{(c.report_card_subjects||[]).map((x:any,i:number)=><tr key={i}><td><b>{x.subjects?.name||"Subject"}</b><br/><small>{x.subjects?.code||""}</small></td><td>{Number(x.percentage).toFixed(1)}%</td><td>{x.grade||"—"}</td><td>{x.position||"—"}</td><td>{x.teacher_remark||"—"}</td></tr>)}</tbody></table></div>{c.general_remark&&<div className="note"><b>General remark:</b> {c.general_remark}</div>}</section>):<section className="panel"><div className="empty">No published results are available yet.</div></section>}</DashboardShell>}return <DashboardShell schoolName={ctx.schoolName||"School Workspace"} roleLabel="Student" title={title} subtitle="Student academic workspace" nav={nav}><section className="panel"><h2>{title}</h2><div className="empty">This module is connected and will display your school-approved information.</div></section></DashboardShell>}
