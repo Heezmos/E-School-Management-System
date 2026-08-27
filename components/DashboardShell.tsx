@@ -49,6 +49,9 @@ export default function DashboardShell({
 
   async function logout() {
     const supabase = createClient();
+    try {
+      await fetch("/api/security-events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) });
+    } catch {}
     await supabase.auth.signOut();
     location.href = "/login";
   }
