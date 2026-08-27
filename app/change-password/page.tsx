@@ -58,6 +58,10 @@ export default function ChangePasswordPage() {
       return;
     }
 
+    try {
+      await fetch("/api/security-events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "password_changed" }) });
+    } catch {}
+
     router.replace("/");
     router.refresh();
   }
@@ -75,7 +79,7 @@ export default function ChangePasswordPage() {
           <p>Your temporary password has worked. Before entering your school workspace, create a private password known only to you.</p>
           <div style={{marginTop:26,padding:18,border:"1px solid rgba(255,255,255,.16)",borderRadius:16,background:"rgba(255,255,255,.06)",lineHeight:1.6,color:"#d7e3f0"}}>
             <b style={{color:"white"}}>Why this is required</b><br/>
-            The Super Admin can create the initial login credential, but E-School forces you to replace it immediately so your permanent password remains private.
+            Your initial login password is temporary. E-School requires you to replace it immediately so your permanent password remains private.
           </div>
         </div>
       </section>
@@ -86,23 +90,11 @@ export default function ChangePasswordPage() {
           <h2>Create your new password</h2>
           <p>This password will replace the temporary credential you received.</p>
 
-          <div className="field">
-            <label>New Password</label>
-            <input name="password" type="password" minLength={8} required placeholder="Minimum 8 characters" autoComplete="new-password" />
-          </div>
-
-          <div className="field">
-            <label>Confirm New Password</label>
-            <input name="confirm_password" type="password" minLength={8} required placeholder="Re-enter your new password" autoComplete="new-password" />
-          </div>
-
+          <div className="field"><label>New Password</label><input name="password" type="password" minLength={8} required placeholder="Minimum 8 characters" autoComplete="new-password" /></div>
+          <div className="field"><label>Confirm New Password</label><input name="confirm_password" type="password" minLength={8} required placeholder="Re-enter your new password" autoComplete="new-password" /></div>
           {error && <div className="error">{error}</div>}
-
-          <button className="primary full" disabled={loading}>
-            {loading ? "Securing account..." : "Save password & enter E-School"}
-          </button>
-
-          <div className="note">After this step, E-School will automatically open the dashboard associated with your backend role and school assignment.</div>
+          <button className="primary full" disabled={loading}>{loading ? "Securing account..." : "Save password & enter E-School"}</button>
+          <div className="note">After this step, E-School will automatically open your assigned workspace.</div>
         </form>
       </section>
     </main>
