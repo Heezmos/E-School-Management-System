@@ -1,12 +1,2 @@
-export default function StatsCards({ stats }: { stats: [string, string | number][] }) {
-  return (
-    <section className="cards">
-      {stats.map(([label, value]) => (
-        <article className="card" key={label}>
-          <div className="label">{label}</div>
-          <div className="value">{value}</div>
-        </article>
-      ))}
-    </section>
-  );
-}
+const marks=["↗","◈","◎","⌁"];
+export default function StatsCards({stats}:{stats:[string,string|number][]}){return <section className="cards refined-stats">{stats.map(([label,value],i)=><article className="card refined-stat" key={label}><div className="stat-top"><span className="label">{label}</span><i>{marks[i%marks.length]}</i></div><div className="value">{value}</div><small>Live workspace data</small></article>)}</section>}
