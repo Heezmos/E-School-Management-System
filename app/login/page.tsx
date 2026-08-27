@@ -10,23 +10,37 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  async function recordSecurityEvent(action: string, email: string) {
+    try {
+      await fetch("/api/security-events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, email })
+      });
+    } catch {
+      // Security event logging must never expose infrastructure details to the user.
+    }
+  }
+
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setError("");
 
     const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") || "");
+    const email = String(form.get("email") || "").trim().toLowerCase();
     const password = String(form.get("password") || "");
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
+      await recordSecurityEvent("login_failed", email);
       setError(error.message);
       setLoading(false);
       return;
     }
 
+    await recordSecurityEvent("login_success", email);
     router.replace("/");
     router.refresh();
   }
@@ -64,9 +78,6 @@ export default function LoginPage() {
 
           <div className="note">
             Your role and school access are determined securely by E-School after sign-in.
-          </div>
-          <div style={{ marginTop: 10, fontSize: 11, color: "#94a3b8" }}>
-            Build: AUTH-FIX-20260826-B
           </div>
         </form>
       </section>
