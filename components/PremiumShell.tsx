@@ -25,6 +25,9 @@ export default function PremiumShell({
 
   async function logout() {
     const supabase = createClient();
+    try {
+      await fetch("/api/security-events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) });
+    } catch {}
     await supabase.auth.signOut();
     location.href = "/login";
   }
@@ -47,13 +50,8 @@ export default function PremiumShell({
           <nav className="nav">
             {nav.map((item) => {
               const group = item.group || "";
-              const groupNode =
-                group && group !== lastGroup ? (
-                  <div className="navlabel" key={`${group}-label`}>{group}</div>
-                ) : null;
-
+              const groupNode = group && group !== lastGroup ? <div className="navlabel" key={`${group}-label`}>{group}</div> : null;
               lastGroup = group;
-
               return (
                 <div key={item.href}>
                   {groupNode}
@@ -65,9 +63,7 @@ export default function PremiumShell({
             })}
           </nav>
 
-          <div className="logout">
-            <button onClick={logout}>↪ Sign out</button>
-          </div>
+          <div className="logout"><button onClick={logout}>↪ Sign out</button></div>
         </aside>
 
         <section className="content">
@@ -75,10 +71,7 @@ export default function PremiumShell({
             <div className="school">
               <button className="mobile" onClick={() => setOpen(true)}>☰</button>
               <div className="crest">🏫</div>
-              <div>
-                <b>{schoolName}</b>
-                <small>{schoolLocation}</small>
-              </div>
+              <div><b>{schoolName}</b><small>{schoolLocation}</small></div>
             </div>
 
             <div className="tools">
@@ -86,10 +79,7 @@ export default function PremiumShell({
               <button className="iconbtn">♢<i className="dot" /></button>
               <div className="profile">
                 <div className="avatar">{roleLabel.slice(0, 2).toUpperCase()}</div>
-                <div>
-                  <b>{userLabel}</b>
-                  <small>{roleLabel}</small>
-                </div>
+                <div><b>{userLabel}</b><small>{roleLabel}</small></div>
               </div>
             </div>
           </header>
