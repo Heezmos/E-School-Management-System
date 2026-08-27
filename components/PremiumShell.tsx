@@ -11,6 +11,7 @@ export default function PremiumShell({schoolName,schoolLocation="Freetown, Sierr
   const [open,setOpen]=useState(false);
   let effectiveNav=[...nav];
   if(roleLabel.toLowerCase().includes("school admin")){
+    if(!effectiveNav.some(item=>item.href==="/school-admin/calendar-timetable")) effectiveNav.push({label:"Calendar & Timetable",href:"/school-admin/calendar-timetable",icon:"◫",group:"ACADEMICS"});
     if(!effectiveNav.some(item=>item.href==="/school-admin/announcements")) effectiveNav.push({label:"Announcements",href:"/school-admin/announcements",icon:"✉",group:"COMMUNICATION"});
     if(!effectiveNav.some(item=>item.href==="/school-admin/support")) effectiveNav.push({label:"Help & Support",href:"/school-admin/support",icon:"?",group:"SUPPORT"});
   }
