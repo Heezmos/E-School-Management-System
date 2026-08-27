@@ -23,6 +23,10 @@ export default function PremiumShell({
 }) {
   const [open, setOpen] = useState(false);
 
+  const effectiveNav = roleLabel.toLowerCase().includes("school admin") && !nav.some((item) => item.href === "/school-admin/support")
+    ? [...nav, { label: "Help & Support", href: "/school-admin/support", icon: "?", group: "SUPPORT" }]
+    : nav;
+
   async function logout() {
     const supabase = createClient();
     try {
@@ -48,7 +52,7 @@ export default function PremiumShell({
           </div>
 
           <nav className="nav">
-            {nav.map((item) => {
+            {effectiveNav.map((item) => {
               const group = item.group || "";
               const groupNode = group && group !== lastGroup ? <div className="navlabel" key={`${group}-label`}>{group}</div> : null;
               lastGroup = group;
