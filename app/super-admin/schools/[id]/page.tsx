@@ -2,34 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import DashboardShell from "@/components/DashboardShell";
 import SchoolAdminCreator from "@/components/SchoolAdminCreator";
 import SchoolAdminManager from "@/components/SchoolAdminManager";
+import SchoolLifecycleControls from "@/components/SchoolLifecycleControls";
 import { getPrimaryRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
 const nav=["Dashboard","Schools","Applications","Subscriptions","Platform Users","Analytics","Support","Audit Logs","Settings"];
-
-export default async function SchoolPage({params}:{params:Promise<{id:string}>}){
- const ctx=await getPrimaryRole(); if(ctx.role!=="super_admin") redirect("/");
- const {id}=await params; const supabase=await createClient();
- const {data:school}=await supabase.from("schools").select("id,name,school_code,email,phone,address,city,country,status,created_at").eq("id",id).maybeSingle();
- if(!school) notFound();
- const {data:assignments}=await supabase.from("user_school_roles").select("user_id,role,is_active,created_at").eq("school_id",id).eq("role","school_admin").order("created_at",{ascending:true});
- const adminClient=createAdminClient();
- const admins=(await Promise.all((assignments||[]).map(async (a:any)=>{
-   const {data}=await adminClient.auth.admin.getUserById(a.user_id);
-   const u=data.user;
-   return {
-     user_id:a.user_id,
-     first_name:String(u?.user_metadata?.first_name||""),
-     last_name:String(u?.user_metadata?.last_name||""),
-     email:String(u?.email||""),
-     is_active:Boolean(a.is_active),
-     must_change_password:Boolean(u?.user_metadata?.must_change_password)
-   };
- }))).filter(Boolean);
- return <DashboardShell schoolName="Platform Control Center" roleLabel="Super Admin" title={school.name} subtitle={`School code: ${school.school_code}`} nav={nav}>
-  <section className="panel tenant-summary"><div className="section-heading"><div><span className="eyebrow">SCHOOL TENANT</span><h2>School Profile</h2><p>Platform-level overview and access management for this school.</p></div><span className={`status-chip ${school.status==="active"?"status-active":"status-muted"}`}>{school.status}</span></div><div className="stats" style={{marginTop:16}}><article className="stat"><div><small>Status</small><div className="value" style={{fontSize:24}}>{school.status}</div></div></article><article className="stat"><div><small>Location</small><div className="value" style={{fontSize:20}}>{school.city||"—"}</div><small>{school.country}</small></div></article><article className="stat"><div><small>Contact</small><div style={{marginTop:10}}>{school.email||"—"}</div><small>{school.phone||""}</small></div></article><article className="stat"><div><small>School Admins</small><div className="value">{admins.length}</div><small>Assigned administrator accounts</small></div></article></div></section>
-  <SchoolAdminCreator schoolId={school.id} schoolName={school.name} />
-  <SchoolAdminManager schoolId={school.id} admins={admins} />
- </DashboardShell>;
-}
+export default async function SchoolPage({params}:{params:Promise<{id:string}>}){const ctx=await getPrimaryRole();if(ctx.role!=="super_admin")redirect("/");const{id}=await params;const supabase=await createClient();const{data:school}=await supabase.from("schools").select("id,name,school_code,email,phone,address,city,country,status,created_at").eq("id",id).maybeSingle();if(!school)notFound();const{data:assignments}=await supabase.from("user_school_roles").select("user_id,role,is_active,created_at").eq("school_id",id).eq("role","school_admin").order("created_at",{ascending:true});const adminClient=createAdminClient();const admins=(await Promise.all((assignments||[]).map(async(a:any)=>{const{data}=await adminClient.auth.admin.getUserById(a.user_id);const u=data.user;return{user_id:a.user_id,first_name:String(u?.user_metadata?.first_name||""),last_name:String(u?.user_metadata?.last_name||""),email:String(u?.email||""),is_active:Boolean(a.is_active),must_change_password:Boolean(u?.user_metadata?.must_change_password)}}))).filter(Boolean);return <DashboardShell schoolName="Platform Control Center" roleLabel="Super Admin" title={school.name} subtitle={`School code: ${school.school_code}`} nav={nav}><section className="panel tenant-summary"><div className="section-heading"><div><span className="eyebrow">SCHOOL TENANT</span><h2>School Profile</h2><p>Platform-level overview and access management for this school.</p></div><span className={`status-chip ${school.status==="active"?"status-active":"status-muted"}`}>{school.status}</span></div><div className="stats" style={{marginTop:16}}><article className="stat"><div><small>Status</small><div className="value" style={{fontSize:24}}>{school.status}</div></div></article><article className="stat"><div><small>Location</small><div className="value" style={{fontSize:20}}>{school.city||"—"}</div><small>{school.country}</small></div></article><article className="stat"><div><small>Contact</small><div style={{marginTop:10}}>{school.email||"—"}</div><small>{school.phone||""}</small></div></article><article className="stat"><div><small>School Admins</small><div className="value">{admins.length}</div><small>Assigned administrator accounts</small></div></article></div></section><SchoolLifecycleControls school={school}/><SchoolAdminCreator schoolId={school.id} schoolName={school.name}/><SchoolAdminManager schoolId={school.id} admins={admins}/></DashboardShell>}
