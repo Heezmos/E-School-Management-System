@@ -1,43 +1,4 @@
-import { NextResponse } from "next/server";
-import { getPrimaryRole } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
-
-export async function POST(request: Request) {
-  const ctx = await getPrimaryRole();
-  if (ctx.role !== "super_admin") return NextResponse.json({ error: "Super Admin access required." }, { status: 403 });
-  const body = await request.json();
-  const name = String(body.name || "").trim();
-  const code = String(body.code || "").trim().toUpperCase();
-  const price = Number(body.price || 0);
-  if (!name || !code || !Number.isFinite(price) || price < 0) return NextResponse.json({ error: "Plan name, code and valid price are required." }, { status: 400 });
-  const features = String(body.features || "").split("\n").map((x) => x.trim()).filter(Boolean);
-  const admin = createAdminClient();
-  const { data, error } = await admin.from("subscription_plans").insert({
-    name,
-    code,
-    description: String(body.description || "").trim() || null,
-    billing_cycle: body.billing_cycle || "monthly",
-    price,
-    setup_fee: Number(body.setup_fee || 0),
-    trial_days: Number(body.trial_days || 0),
-    grace_period_days: Number(body.grace_period_days || 0),
-    features,
-    currency: String(body.currency || "SLE").trim().toUpperCase(),
-    max_students: body.max_students ? Number(body.max_students) : null,
-    max_teachers: body.max_teachers ? Number(body.max_teachers) : null,
-    is_active: true
-  }).select("id").single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  await admin.from("audit_logs").insert({ user_id: ctx.user.id, action: "create_subscription_plan", entity_type: "subscription_plan", entity_id: data.id, metadata: { name, code, price } });
-  return NextResponse.json({ ok: true });
-}
-
-export async function PATCH(request: Request) {
-  const ctx = await getPrimaryRole();
-  if (ctx.role !== "super_admin") return NextResponse.json({ error: "Super Admin access required." }, { status: 403 });
-  const body = await request.json();
-  const admin = createAdminClient();
-  const { error } = await admin.from("subscription_plans").update({ is_active: !!body.is_active, updated_at: new Date().toISOString() }).eq("id", body.id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json({ ok: true });
-}
+import{NextResponse}from"next/server";import{getPrimaryRole}from"@/lib/auth";import{createAdminClient}from"@/lib/supabase/admin";
+const cycles=new Set(["monthly","termly","annual","custom"]);
+export async function POST(request:Request){const ctx=await getPrimaryRole();if(ctx.role!=="super_admin")return NextResponse.json({error:"Super Admin access required."},{status:403});const body=await request.json();const name=String(body.name||"").trim(),code=String(body.code||"").trim().toUpperCase(),price=Number(body.price||0),setupFee=Number(body.setup_fee||0),trialDays=Number(body.trial_days||0),graceDays=Number(body.grace_period_days||0),billingCycle=String(body.billing_cycle||"monthly");if(!name||!code||!cycles.has(billingCycle)||![price,setupFee,trialDays,graceDays].every(Number.isFinite)||price<0||setupFee<0||trialDays<0||graceDays<0)return NextResponse.json({error:"Plan name, code, billing cycle and valid non-negative pricing values are required."},{status:400});const features=String(body.features||"").split("\n").map(x=>x.trim()).filter(Boolean);const admin=createAdminClient();const payload={name,code,description:String(body.description||"").trim()||null,billing_cycle:billingCycle,price,setup_fee:setupFee,trial_days:trialDays,grace_period_days:graceDays,features,currency:String(body.currency||"SLE").trim().toUpperCase(),max_students:body.max_students?Number(body.max_students):null,max_teachers:body.max_teachers?Number(body.max_teachers):null,is_active:true};const{data,error}=await admin.from("subscription_plans").insert(payload).select("id").single();if(error)return NextResponse.json({error:error.message},{status:400});await admin.from("audit_logs").insert({user_id:ctx.user.id,action:"create_subscription_plan",entity_type:"subscription_plan",entity_id:data.id,new_values:payload,reason:"Super Admin created subscription plan"});return NextResponse.json({ok:true})}
+export async function PATCH(request:Request){const ctx=await getPrimaryRole();if(ctx.role!=="super_admin")return NextResponse.json({error:"Super Admin access required."},{status:403});const body=await request.json();if(!body.id)return NextResponse.json({error:"Plan id is required."},{status:400});const admin=createAdminClient();const{data:current}=await admin.from("subscription_plans").select("is_active,name,code").eq("id",body.id).maybeSingle();if(!current)return NextResponse.json({error:"Subscription plan not found."},{status:404});const next=!!body.is_active;const{error}=await admin.from("subscription_plans").update({is_active:next,updated_at:new Date().toISOString()}).eq("id",body.id);if(error)return NextResponse.json({error:error.message},{status:400});await admin.from("audit_logs").insert({user_id:ctx.user.id,action:"change_subscription_plan_availability",entity_type:"subscription_plan",entity_id:body.id,old_values:{is_active:current.is_active},new_values:{is_active:next,name:current.name,code:current.code},reason:"Super Admin changed plan availability"});return NextResponse.json({ok:true})}
